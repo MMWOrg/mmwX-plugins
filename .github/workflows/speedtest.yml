@@ -1,0 +1,69 @@
+name: SpeedTester Build and Release
+
+# 妙妙屋X 家用测速端(plugins/speedtest)独立打包。tag 形如 speedtest-v1.2.3 触发。
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'speedtest-v*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64, ext: '' }
+          - { goos: linux, goarch: arm64, ext: '' }
+          - { goos: windows, goarch: amd64, ext: '.exe' }
+          - { goos: windows, goarch: arm64, ext: '.exe' }
+          - { goos: darwin, goarch: amd64, ext: '' }
+          - { goos: darwin, goarch: arm64, ext: '' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+          cache-dependency-path: speedtest/go.sum
+      - name: Build
+        working-directory: speedtest
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+        run: |
+          mkdir -p ../build
+          go build -trimpath -ldflags="-s -w" -o ../build/mmwx-speedtester-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mmwx-speedtester-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: build/mmwx-speedtester-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+          retention-days: 7
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/speedtest-v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - name: Create checksums
+        run: |
+          cd release
+          sha256sum mmwx-speedtester-* > checksums.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          files: |
+            release/mmwx-speedtester-*
+            release/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
