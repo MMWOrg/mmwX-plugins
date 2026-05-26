@@ -37,6 +37,9 @@ GOOS=windows GOARCH=amd64 go build -o mmwx-speedtester.exe .
 <details>
 <summary>更新日志</summary>
 
+### v0.0.8 (2026-05-26)
+- 🌈优化单线程测速
+
 ### v0.0.7 (2026-05-26)
 - Update install.sh
 - 🌈 支持延迟测试
