@@ -37,6 +37,10 @@ GOOS=windows GOARCH=amd64 go build -o mmwx-speedtester.exe .
 <details>
 <summary>更新日志</summary>
 
+### v0.0.4 (2026-05-26)
+- 🌈增加测速安装脚本
+- 🌈支持多线程测速
+
 ### v0.0.3 (2026-05-23)
 - 🌈测速结果支持出口IP显示
 
